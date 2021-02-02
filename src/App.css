@@ -1,0 +1,138 @@
+#main {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	background-color: lightsalmon;
+	min-height: 100vh;
+}
+
+#components,
+#plan,
+#resources,
+#recipes {
+	margin-bottom: 1em;
+}
+
+/** -----------
+ PLANNER
+ **/
+#plan {
+	background-color: lightgreen;
+}
+
+.plan-item,
+.plan-item-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	border-bottom: 1px solid black;
+}
+
+.plan-item-header {
+	font-weight: bolder;
+}
+
+.plan-item--item,
+.plan-item--rate {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+/** -----------
+ RESOURCES
+ **/
+#resources {
+	background-color: lightyellow;
+}
+
+.resources-item,
+.resources-item-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	border-bottom: 1px solid black;
+}
+
+.resources-item.explicit {
+	background-color: lightgreen;
+}
+
+.resources-item-header {
+	font-weight: bolder;
+}
+
+.resources-item--item,
+.resources-item--rate,
+.resources-item--uses,
+.resources-item--usedby {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.resources-item--uses-item,
+.resources-item--usedby-item {
+	display: flex;
+	flex-direction: row;
+}
+
+.resources-item--uses-item--rate,
+.resources-item--usedby-item--rate {
+	flex: 1;
+}
+
+.resources-item--uses-item--name,
+.resources-item--usedby-item--name {
+	flex: 5;
+}
+
+/** -----------
+ RECIPES
+ **/
+#recipes {
+	background-color: lightblue;
+}
+
+.recipes-item,
+.recipes-item-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	border-bottom: 1px solid black;
+}
+
+.recipes-item-header {
+	font-weight: bolder;
+}
+
+.recipes-item--name,
+.recipes-item--inputs,
+.recipes-item--outputs {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.recipes-item--inputs-item,
+.recipes-item--outputs-item {
+	display: flex;
+	flex-direction: row;
+}
+
+.recipes-item--inputs-item--amount,
+.recipes-item--outputs-item--amount {
+	flex: 1;
+}
+
+.recipes-item--inputs-item--name,
+.recipes-item--outputs-item--name {
+	flex: 5;
+}
+
+/** -----------
+ COMPONENTS
+ **/
+#components {
+	background-color: lightgray;
+}
