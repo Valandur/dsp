@@ -150,11 +150,11 @@ const App: FC = () => {
 			<div id="resources">
 				<h2>Resources</h2>
 				<div className="resources-item-header">
+					<div className="resources-item--action"></div>
 					<div className="resources-item--item">Item</div>
 					<div className="resources-item--rate">Rate [1/min]</div>
 					<div className="resources-item--uses">Uses</div>
 					<div className="resources-item--usedby">Used By</div>
-					<div className="resources-item--action"></div>
 				</div>
 				{resources.map((resource) => {
 					const uses = [...resource.uses.entries()].map((e) => ({ id: e[0], rate: e[1] }));
@@ -163,29 +163,36 @@ const App: FC = () => {
 
 					return (
 						<div className={'resources-item ' + (resource.explicit ? 'explicit' : '')} key={resource.id}>
+							<div className="resources-item--action">
+								{!resource.explicit && <button onClick={() => addComponentPlan(resource.id, rate)}>+</button>}
+							</div>
 							<div className="resources-item--item">{resource.id}</div>
-							<div className="resources-item--rate">{rate * 60}</div>
+							<div className="resources-item--rate">{Math.round(rate * 60)}</div>
 							<div className="resources-item--uses">
 								{uses.map((use) => (
 									<div key={use.id} className="resources-item--uses-item">
-										<div className="resources-item--uses-item--rate">{use.rate * 60}</div>
+										<div className="resources-item--uses-item--rate">{Math.round(use.rate * 60)}</div>
 										<div className="resources-item--uses-item--name">{use.id}</div>
 									</div>
 								))}
 							</div>
 							<div className="resources-item--usedby">
-								{resource.explicit && <div>Planner</div>}
+								{resource.explicit && (
+									<div className="resources-item--usedby-item">
+										<div className="resources-item--usedby-item--rate">
+											{Math.round(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate * 60)}
+										</div>
+										<div className="resources-item--usedby-item--name">Planner</div>
+									</div>
+								)}
 								{usedBy
 									.filter((usedBy) => usedBy.id !== resource.id)
 									.map((usedBy) => (
 										<div key={usedBy.id} className="resources-item--usedby-item">
-											<div className="resources-item--usedby-item--rate">{usedBy.rate * 60}</div>
+											<div className="resources-item--usedby-item--rate">{Math.round(usedBy.rate * 60)}</div>
 											<div className="resources-item--usedby-item--name">{usedBy.id}</div>
 										</div>
 									))}
-							</div>
-							<div className="resources-item--action">
-								<button onClick={() => addComponentPlan(resource.id, rate)}>+</button>
 							</div>
 						</div>
 					);
