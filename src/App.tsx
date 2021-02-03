@@ -73,9 +73,11 @@ const App: FC = () => {
 		const queuedSettings: QueuedSetting[] = [...settings.values()]
 			.filter((setting) => !setting.disabled)
 			.map((setting) => ({ ...setting, implicit: false }));
+		let i = 0;
 		while (queuedSettings.length > 0) {
+			i++; // Safety to stop endless loops
 			const setting = queuedSettings.shift();
-			if (!setting) {
+			if (!setting || i > 1000) {
 				break;
 			}
 
@@ -97,11 +99,9 @@ const App: FC = () => {
 				newResources.set(outputResource.id, outputResource);
 			}
 
-			const recipe = recipes.find((r) => r.name === setting.recipe) || recipes[0];
+			const recipe = outputResource.recipe || recipes.find((r) => r.name === setting.recipe) || recipes[0];
 			if (!outputResource.recipe) {
 				outputResource.recipe = recipe;
-			} else if (outputResource.recipe !== recipe) {
-				console.error(`Resource found with different recipe`);
 			}
 
 			if (setting.external) {
@@ -138,8 +138,20 @@ const App: FC = () => {
 						newResources.set(inputResource.id, inputResource);
 					}
 
+					// Break loops
+					if (outputResource.id === inputResource.id) {
+						continue;
+					}
+
 					inputResource.usedBy.set(setting.id, (inputResource.usedBy.get(setting.id) || 0) + neededRate);
-					queuedSettings.push({ id: input.id, rate: neededRate, disabled: false, implicit: true, external: false });
+					queuedSettings.push({
+						id: input.id,
+						rate: neededRate,
+						recipe: recipe.name,
+						disabled: false,
+						implicit: true,
+						external: false
+					});
 				}
 			}
 		}
@@ -189,16 +201,18 @@ const App: FC = () => {
 						<button onClick={() => changeSetting(newId, { disabled: false, rate: newRate })}>+</button>
 					</div>
 				</div>
-				{[...settings.values()].map((setting) => (
-					<div className={'plan-item' + (setting.disabled ? ' disabled' : '')} key={setting.id}>
-						<div className="plan-item--item">{setting.id}</div>
-						<div className="plan-item--rate">{setting.rate && setting.rate * displayFactor}</div>
-						<div className="plan-item--action">
-							<button onClick={() => changeSetting(setting.id, { disabled: !setting.disabled })}>T</button>{' '}
-							<button onClick={() => changeSetting(setting.id, { rate: undefined })}>-</button>
+				{[...settings.values()]
+					.filter((setting) => !!setting.rate || setting.recipe)
+					.map((setting) => (
+						<div className={'plan-item' + (setting.disabled ? ' disabled' : '')} key={setting.id}>
+							<div className="plan-item--item">{setting.id}</div>
+							<div className="plan-item--rate">{setting.rate && setting.rate * displayFactor}</div>
+							<div className="plan-item--action">
+								<button onClick={() => changeSetting(setting.id, { disabled: !setting.disabled })}>T</button>{' '}
+								<button onClick={() => changeSetting(setting.id, { rate: undefined })}>-</button>
+							</div>
 						</div>
-					</div>
-				))}
+					))}
 			</div>
 
 			<div id="resources">
@@ -211,62 +225,85 @@ const App: FC = () => {
 					<div className="resources-item--uses">Uses</div>
 					<div className="resources-item--usedby">Used By</div>
 				</div>
-				{resources.map((resource) => {
-					const uses = [...resource.uses.entries()].map((e) => ({ id: e[0], rate: e[1] }));
-					const usedBy = [...resource.usedBy.entries()].map((e) => ({ id: e[0], rate: e[1] }));
-					const rate = usedBy.reduce((acc, res) => acc + res.rate, 0);
-					const outputRatio = resource.recipe
-						? resource.recipe.outputs.find((output) => output.id === resource.id)!.amount / resource.recipe.time
-						: 1;
+				{resources
+					.filter((resource) => resource.usedBy.size > 0)
+					.map((resource) => {
+						const uses = [...resource.uses.entries()].map((e) => ({ id: e[0], rate: e[1] }));
+						const usedBy = [...resource.usedBy.entries()].map((e) => ({ id: e[0], rate: e[1] }));
+						const rate = usedBy.reduce((acc, res) => acc + res.rate, 0);
+						const recipes = recipesByComponent.get(resource.id)?.asOutput;
+						const outputRatio = resource.recipe
+							? resource.recipe.outputs.find((output) => output.id === resource.id)!.amount / resource.recipe.time
+							: 1;
 
-					const className =
-						'resources-item' + (!resource.implicit ? ' explicit' : '') + (resource.external ? ' external' : '');
+						const className =
+							'resources-item' + (!resource.implicit ? ' explicit' : '') + (resource.external ? ' external' : '');
 
-					return (
-						<div className={className} key={resource.id}>
-							<div className="resources-item--action">
-								{resource.implicit && (
-									<button onClick={() => changeSetting(resource.id, { external: !resource.external })}>E</button>
-								)}
-							</div>
-							<div className="resources-item--item">{resource.id}</div>
-							<div className="resources-item--rate">{formatResourceRate(rate)}</div>
-							<div className="resources-item--machines">
-								{resource.recipe && (
-									<>
-										{Math.round((rate / outputRatio) * 10) / 10}x {resource.recipe.machine}
-									</>
-								)}
-							</div>
-							<div className="resources-item--uses">
-								{uses.map((use) => (
-									<div key={use.id} className="resources-item--uses-item">
-										<div className="resources-item--uses-item--rate">{formatResourceRate(use.rate)}</div>
-										<div className="resources-item--uses-item--name">{use.id}</div>
-									</div>
-								))}
-							</div>
-							<div className="resources-item--usedby">
-								{!resource.implicit && (
-									<div className="resources-item--usedby-item">
-										<div className="resources-item--usedby-item--rate">
-											{formatResourceRate(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate)}
-										</div>
-										<div className="resources-item--usedby-item--name">Planner</div>
-									</div>
-								)}
-								{usedBy
-									.filter((usedBy) => usedBy.id !== resource.id)
-									.map((usedBy) => (
-										<div key={usedBy.id} className="resources-item--usedby-item">
-											<div className="resources-item--usedby-item--rate">{formatResourceRate(usedBy.rate)}</div>
-											<div className="resources-item--usedby-item--name">{usedBy.id}</div>
+						return (
+							<div className={className} key={resource.id}>
+								<div className="resources-item--action">
+									{resource.implicit ? (
+										<button onClick={() => changeSetting(resource.id, { external: !resource.external })}>E</button>
+									) : (
+										<div />
+									)}
+									{recipes && recipes.length > 1 && (
+										<select
+											value={resource.recipe?.name}
+											onChange={(e) => changeSetting(resource.id, { recipe: e.target.value })}
+										>
+											{recipes.map((recipe) => (
+												<option value={recipe.name} key={recipe.name}>
+													{recipe.name}
+												</option>
+											))}
+										</select>
+									)}
+								</div>
+								<div className="resources-item--item">{resource.id}</div>
+								<div className="resources-item--rate">{formatResourceRate(rate)}</div>
+								<div className="resources-item--machines">
+									{resource.recipe && (
+										<>
+											{Math.round((rate / outputRatio) * 10) / 10}x {resource.recipe.machine}
+										</>
+									)}
+								</div>
+								<div className="resources-item--uses">
+									{uses.map((use) => (
+										<div
+											key={use.id}
+											className={'resources-item--uses-item' + (use.id === resource.id ? ' recursive' : '')}
+										>
+											<div className="resources-item--uses-item--rate">{formatResourceRate(use.rate)}</div>
+											<div className="resources-item--uses-item--name">
+												{use.id}
+												{use.id === resource.id && ' 🔁'}
+											</div>
 										</div>
 									))}
+								</div>
+								<div className="resources-item--usedby">
+									{!resource.implicit && (
+										<div className="resources-item--usedby-item">
+											<div className="resources-item--usedby-item--rate">
+												{formatResourceRate(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate)}
+											</div>
+											<div className="resources-item--usedby-item--name">Planner</div>
+										</div>
+									)}
+									{usedBy
+										.filter((usedBy) => usedBy.id !== resource.id)
+										.map((usedBy) => (
+											<div key={usedBy.id} className="resources-item--usedby-item">
+												<div className="resources-item--usedby-item--rate">{formatResourceRate(usedBy.rate)}</div>
+												<div className="resources-item--usedby-item--name">{usedBy.id}</div>
+											</div>
+										))}
+								</div>
 							</div>
-						</div>
-					);
-				})}
+						);
+					})}
 			</div>
 
 			<div id="recipes">

@@ -60,16 +60,17 @@
 
 .plan-item--item,
 .plan-item--rate {
-	flex: 1;
+	flex: 10;
 	display: flex;
 	flex-direction: column;
 	padding: 0.2em 1em;
 }
 
 .plan-item--action {
+	flex: 1;
 	display: flex;
 	justify-content: center;
-	width: 3em;
+	padding: 0.2em 1em;
 }
 
 /** -----------
@@ -111,15 +112,22 @@
 }
 
 .resources-item--action {
+	flex: 1;
 	display: flex;
-	justify-content: center;
-	width: 3em;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.2em 1em;
 }
 
 .resources-item--uses-item,
 .resources-item--usedby-item {
 	display: flex;
 	flex-direction: row;
+}
+
+.resources-item--uses-item.recursive {
+	background-color: lightgray;
 }
 
 .resources-item--uses-item--rate,
