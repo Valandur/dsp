@@ -53,7 +53,7 @@ const App: FC = () => {
 	const [resources, setResources] = useState<ComponentResource[]>([]);
 	const [newComponent, setNewComponent] = useState('electromagnetic_matrix');
 	const [newRate, setNewRate] = useState(1);
-	const [displayFactor] = useState(60);
+	const [displayFactor, setDisplayFactor] = useState(1);
 
 	const addComponentPlan = useCallback(
 		(id: string, rate: number) => {
@@ -139,6 +139,16 @@ const App: FC = () => {
 	return (
 		<div id="main">
 			<h1>Dyson Sphere Program</h1>
+
+			<div id="settings">
+				<h2>Settings</h2>
+				<div className="settings-item">
+					<div className="settings-item--name">Rate [s]</div>
+					<div className="settings-item--value">
+						<input type="number" value={displayFactor} onChange={(e) => setDisplayFactor(Number(e.target.value))} />
+					</div>
+				</div>
+			</div>
 
 			<div id="plan">
 				<h2>Planner</h2>

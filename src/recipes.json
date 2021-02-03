@@ -1,12 +1,5 @@
 [
 	{
-		"name": "water",
-		"inputs": [{ "id": "water_source", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "water", "amount": 0.916666666666666666666666666666666 }],
-		"time": 1,
-		"machine": "water_extractor"
-	},
-	{
 		"name": "iron_ingot",
 		"inputs": [{ "id": "iron_ore", "amount": 1 }],
 		"outputs": [{ "id": "iron_ingot", "amount": 1 }],
@@ -104,7 +97,7 @@
 		],
 		"outputs": [{ "id": "titanium_alloy", "amount": 4 }],
 		"time": 12,
-		"machine": "assembler"
+		"machine": "smelter"
 	},
 	{
 		"name": "glass",
@@ -143,6 +136,13 @@
 		"outputs": [{ "id": "organic_crystal", "amount": 1 }],
 		"time": 6,
 		"machine": "chemical_lab"
+	},
+	{
+		"name": "steel",
+		"inputs": [{ "id": "iron_ingot", "amount": 3 }],
+		"outputs": [{ "id": "steel", "amount": 1 }],
+		"time": 3,
+		"machine": "smelter"
 	},
 	{
 		"name": "electric_motor",
@@ -209,6 +209,27 @@
 		"outputs": [{ "id": "sulfuric_acid", "amount": 4 }],
 		"time": 6,
 		"machine": "chemical_lab"
+	},
+	{
+		"name": "carbon_nanotube",
+		"inputs": [
+			{ "id": "graphene", "amount": 3 },
+			{ "id": "titanium_ingot", "amount": 1 }
+		],
+		"outputs": [{ "id": "carbon_nanotube", "amount": 2 }],
+		"time": 4,
+		"machine": "chemical_lab"
+	},
+	{
+		"name": "super_magnetic_ring",
+		"inputs": [
+			{ "id": "electromagnetic_turbine", "amount": 2 },
+			{ "id": "magnet", "amount": 3 },
+			{ "id": "energetic_graphite", "amount": 1 }
+		],
+		"outputs": [{ "id": "super_magnetic_ring", "amount": 1 }],
+		"time": 3,
+		"machine": "assembler"
 	},
 	{
 		"name": "processor",

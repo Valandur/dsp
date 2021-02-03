@@ -6,11 +6,34 @@
 	min-height: 100vh;
 }
 
-#components,
+#settings,
 #plan,
 #resources,
-#recipes {
+#recipes,
+#components {
+	padding-bottom: 1em;
 	margin-bottom: 1em;
+}
+
+/** -----------
+ SETTINGS
+ **/
+#settings {
+	background-color: lightcyan;
+}
+
+.settings-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	border-bottom: 1px solid black;
+}
+
+.settings-item--name {
+	flex: 1;
+}
+.settings-item--value {
+	flex: 5;
 }
 
 /** -----------
