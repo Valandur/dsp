@@ -9,8 +9,7 @@
 #settings,
 #plan,
 #resources,
-#recipes,
-#components {
+#recipes {
 	padding-bottom: 1em;
 	margin-bottom: 1em;
 }
@@ -92,6 +91,10 @@
 	background-color: lightgreen;
 }
 
+.resources-item.external {
+	background-color: lightblue;
+}
+
 .resources-item-header {
 	font-weight: bolder;
 }
@@ -170,11 +173,4 @@
 .recipes-item--inputs-item--name,
 .recipes-item--outputs-item--name {
 	flex: 5;
-}
-
-/** -----------
- COMPONENTS
- **/
-#components {
-	background-color: lightgray;
 }

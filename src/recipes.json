@@ -173,6 +173,17 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "strange_matter",
+		"inputs": [
+			{ "id": "particle_container", "amount": 2 },
+			{ "id": "iron_ingot", "amount": 2 },
+			{ "id": "deuterium", "amount": 10 }
+		],
+		"outputs": [{ "id": "strange_matter", "amount": 1 }],
+		"time": 8,
+		"machine": "particle_collider"
+	},
+	{
 		"name": "gear",
 		"inputs": [{ "id": "iron_ingot", "amount": 1 }],
 		"outputs": [{ "id": "gear", "amount": 1 }],
@@ -200,6 +211,16 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "graviton_lens",
+		"inputs": [
+			{ "id": "diamond", "amount": 4 },
+			{ "id": "strange_matter", "amount": 1 }
+		],
+		"outputs": [{ "id": "graviton_lens", "amount": 1 }],
+		"time": 6,
+		"machine": "assembler"
+	},
+	{
 		"name": "sulfuric_acid",
 		"inputs": [
 			{ "id": "refined_oil", "amount": 6 },
@@ -209,6 +230,13 @@
 		"outputs": [{ "id": "sulfuric_acid", "amount": 4 }],
 		"time": 6,
 		"machine": "chemical_lab"
+	},
+	{
+		"name": "deuterium",
+		"inputs": [{ "id": "hydrogen", "amount": 10 }],
+		"outputs": [{ "id": "deuterium", "amount": 5 }],
+		"time": 5,
+		"machine": "particle_collider"
 	},
 	{
 		"name": "carbon_nanotube",
@@ -232,6 +260,17 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "particle_broadband",
+		"inputs": [
+			{ "id": "carbon_nanotube", "amount": 2 },
+			{ "id": "crystal_silicon", "amount": 2 },
+			{ "id": "plastic", "amount": 1 }
+		],
+		"outputs": [{ "id": "particle_broadband", "amount": 1 }],
+		"time": 8,
+		"machine": "assembler"
+	},
+	{
 		"name": "processor",
 		"inputs": [
 			{ "id": "circuit_board", "amount": 2 },
@@ -250,6 +289,13 @@
 		],
 		"outputs": [{ "id": "particle_container", "amount": 1 }],
 		"time": 4,
+		"machine": "assembler"
+	},
+	{
+		"name": "space_warper",
+		"inputs": [{ "id": "graviton_lens", "amount": 1 }],
+		"outputs": [{ "id": "space_warper", "amount": 1 }],
+		"time": 10,
 		"machine": "assembler"
 	},
 	{
@@ -310,6 +356,16 @@
 		],
 		"outputs": [{ "id": "structure_matrix", "amount": 1 }],
 		"time": 8,
+		"machine": "matrix_lab"
+	},
+	{
+		"name": "information_matrix",
+		"inputs": [
+			{ "id": "processor", "amount": 2 },
+			{ "id": "particle_broadband", "amount": 1 }
+		],
+		"outputs": [{ "id": "information_matrix", "amount": 1 }],
+		"time": 10,
 		"machine": "matrix_lab"
 	}
 ]

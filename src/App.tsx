@@ -11,19 +11,25 @@ interface ComponentRecipes {
 	asOutput: Recipe[];
 }
 
-interface ComponentPlan {
-	id: string;
-	rate: number;
-	enabled: boolean;
-	explicit: boolean;
-}
-
-interface ComponentResource {
+interface Resource {
 	id: string;
 	recipe: Recipe | null;
-	explicit: boolean;
+	implicit: boolean;
+	external: boolean;
 	usedBy: Map<string, number>;
 	uses: Map<string, number>;
+}
+
+interface Setting {
+	id: string;
+	rate?: number;
+	disabled?: boolean;
+	external?: boolean;
+	recipe?: string;
+}
+
+interface QueuedSetting extends Setting {
+	implicit: boolean;
 }
 
 const recipesByComponent: Map<string, ComponentRecipes> = new Map();
@@ -49,92 +55,96 @@ for (const recipe of recipes) {
 const components = [...recipesByComponent.values()].sort((a, b) => a.id.localeCompare(b.id));
 
 const App: FC = () => {
-	const [plans, setPlans] = useState<ComponentPlan[]>([]);
-	const [resources, setResources] = useState<ComponentResource[]>([]);
-	const [newComponent, setNewComponent] = useState('electromagnetic_matrix');
+	const [resources, setResources] = useState<Resource[]>([]);
+	const [settings, setSettings] = useState<Map<string, Setting>>(new Map());
+	const [newId, setNewId] = useState('electromagnetic_matrix');
 	const [newRate, setNewRate] = useState(1);
-	const [displayFactor, setDisplayFactor] = useState(1);
+	const [displayFactor, setDisplayFactor] = useState(60);
 
-	const addComponentPlan = useCallback(
-		(id: string, rate: number) => {
-			setPlans((plans) => plans.concat([{ id, rate, enabled: true, explicit: true }]));
-		},
-		[setPlans]
-	);
-	const toggleComponentPlan = useCallback(
-		(index: number, enabled: boolean) => {
-			setPlans((plans) => plans.map((plan, i) => (i === index ? { ...plan, enabled } : plan)));
-		},
-		[setPlans]
-	);
-	const removeComponentPlan = useCallback(
-		(index: number) => {
-			setPlans((plans) => plans.filter((_, i) => i !== index));
-		},
-		[setPlans]
-	);
-
-	const formatResource = useCallback(
-		(num: number) => {
-			return (num * displayFactor).toFixed(1);
-		},
-		[displayFactor]
-	);
+	const changeSetting = useCallback((id: string, newSettings: Partial<Omit<Setting, 'id'>>) => {
+		setSettings((settings) => new Map(settings.set(id, { id, ...settings.get(id), ...newSettings })));
+	}, []);
+	const formatResourceRate = useCallback((num: number) => (num * displayFactor).toFixed(1), [displayFactor]);
 
 	useEffect(() => {
-		const newResources: Map<string, ComponentResource> = new Map();
-		const queuedPlans: ComponentPlan[] = [...plans.values()].filter((p) => p.enabled);
-		while (queuedPlans.length > 0) {
-			const plan = queuedPlans.shift();
-			if (!plan) {
+		// Reset all resources
+		const newResources = new Map<string, Resource>();
+
+		const queuedSettings: QueuedSetting[] = [...settings.values()]
+			.filter((setting) => !setting.disabled)
+			.map((setting) => ({ ...setting, implicit: false }));
+		while (queuedSettings.length > 0) {
+			const setting = queuedSettings.shift();
+			if (!setting) {
 				break;
 			}
 
-			const recipes = recipesByComponent.get(plan.id)?.asOutput;
+			const recipes = recipesByComponent.get(setting.id)?.asOutput;
 			if (!recipes || recipes.length === 0) {
 				continue;
 			}
 
-			if (recipes.length > 1) {
-				console.log('Multiple recipes to create', plan.id, recipes);
-			}
-
-			const recipe = recipes[0];
-			const outputRatio = recipe.outputs.find((output) => output.id === plan.id)!.amount / recipe.time;
-
-			let outputResource = newResources.get(plan.id);
+			let outputResource = newResources.get(setting.id);
 			if (!outputResource) {
-				outputResource = { id: plan.id, recipe: null, explicit: false, usedBy: new Map(), uses: new Map() };
+				outputResource = {
+					id: setting.id,
+					recipe: null,
+					implicit: true,
+					external: false,
+					usedBy: new Map(),
+					uses: new Map()
+				};
 				newResources.set(outputResource.id, outputResource);
 			}
 
+			const recipe = recipes.find((r) => r.name === setting.recipe) || recipes[0];
 			if (!outputResource.recipe) {
 				outputResource.recipe = recipe;
 			} else if (outputResource.recipe !== recipe) {
 				console.error(`Resource found with different recipe`);
 			}
 
-			if (plan.explicit) {
-				outputResource.explicit = true;
-				outputResource.usedBy.set(plan.id, (outputResource.usedBy.get(plan.id) || 0) + plan.rate);
+			if (setting.external) {
+				outputResource.external = true;
+				continue;
 			}
 
-			for (const input of recipe.inputs) {
-				let inputResource = newResources.get(input.id);
-				if (!inputResource) {
-					inputResource = { id: input.id, recipe: null, explicit: false, usedBy: new Map(), uses: new Map() };
-					newResources.set(inputResource.id, inputResource);
-				}
+			if (!setting.rate) {
+				continue;
+			}
 
-				const neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
-				inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
+			if (!setting.implicit) {
+				outputResource.implicit = false;
+				outputResource.usedBy.set(setting.id, (outputResource.usedBy.get(setting.id) || 0) + setting.rate);
+			}
+
+			const outputRatio = recipe.outputs.find((output) => output.id === setting.id)!.amount / recipe.time;
+
+			for (const input of recipe.inputs) {
+				const neededRate = (setting.rate / outputRatio) * (input.amount / recipe.time);
 				outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
 
-				queuedPlans.push({ id: input.id, rate: neededRate, enabled: true, explicit: false });
+				if (!outputResource.external) {
+					let inputResource = newResources.get(input.id);
+					if (!inputResource) {
+						inputResource = {
+							id: input.id,
+							recipe: null,
+							implicit: true,
+							external: false,
+							usedBy: new Map(),
+							uses: new Map()
+						};
+						newResources.set(inputResource.id, inputResource);
+					}
+
+					inputResource.usedBy.set(setting.id, (inputResource.usedBy.get(setting.id) || 0) + neededRate);
+					queuedSettings.push({ id: input.id, rate: neededRate, disabled: false, implicit: true, external: false });
+				}
 			}
 		}
 		setResources([...newResources.values()]);
-	}, [plans]);
+	}, [settings]);
 
 	return (
 		<div id="main">
@@ -154,12 +164,12 @@ const App: FC = () => {
 				<h2>Planner</h2>
 				<div className="plan-item-header">
 					<div className="plan-item--item">Item</div>
-					<div className="plan-item--rate">Target rate [1/min]</div>
+					<div className="plan-item--rate">Target rate [1/{displayFactor}s]</div>
 					<div className="plan-item--action"></div>
 				</div>
 				<div className="plan-item">
 					<div className="plan-item--item">
-						<select value={newComponent} onChange={(e) => setNewComponent(e.target.value)}>
+						<select value={newId} onChange={(e) => setNewId(e.target.value)}>
 							{components.map((component) => (
 								<option key={component.id} value={component.id}>
 									{component.id}
@@ -171,21 +181,21 @@ const App: FC = () => {
 						<input
 							type="number"
 							placeholder="Target rate"
-							value={newRate * 60}
-							onChange={(e) => setNewRate(Number(e.target.value) / 60)}
+							value={newRate * displayFactor}
+							onChange={(e) => setNewRate(Number(e.target.value) / displayFactor)}
 						/>
 					</div>
 					<div className="plan-item--action">
-						<button onClick={() => addComponentPlan(newComponent, newRate)}>+</button>
+						<button onClick={() => changeSetting(newId, { disabled: false, rate: newRate })}>+</button>
 					</div>
 				</div>
-				{plans.map((plan, i) => (
-					<div className={'plan-item' + (plan.enabled ? '' : ' disabled')} key={i}>
-						<div className="plan-item--item">{plan.id}</div>
-						<div className="plan-item--rate">{plan.rate * 60}</div>
+				{[...settings.values()].map((setting) => (
+					<div className={'plan-item' + (setting.disabled ? ' disabled' : '')} key={setting.id}>
+						<div className="plan-item--item">{setting.id}</div>
+						<div className="plan-item--rate">{setting.rate && setting.rate * displayFactor}</div>
 						<div className="plan-item--action">
-							<button onClick={() => toggleComponentPlan(i, !plan.enabled)}>T</button>{' '}
-							<button onClick={() => removeComponentPlan(i)}>-</button>
+							<button onClick={() => changeSetting(setting.id, { disabled: !setting.disabled })}>T</button>{' '}
+							<button onClick={() => changeSetting(setting.id, { rate: undefined })}>-</button>
 						</div>
 					</div>
 				))}
@@ -209,33 +219,38 @@ const App: FC = () => {
 						? resource.recipe.outputs.find((output) => output.id === resource.id)!.amount / resource.recipe.time
 						: 1;
 
+					const className =
+						'resources-item' + (!resource.implicit ? ' explicit' : '') + (resource.external ? ' external' : '');
+
 					return (
-						<div className={'resources-item ' + (resource.explicit ? 'explicit' : '')} key={resource.id}>
+						<div className={className} key={resource.id}>
 							<div className="resources-item--action">
-								{!resource.explicit && <button onClick={() => addComponentPlan(resource.id, rate)}>+</button>}
+								{resource.implicit && (
+									<button onClick={() => changeSetting(resource.id, { external: !resource.external })}>E</button>
+								)}
 							</div>
 							<div className="resources-item--item">{resource.id}</div>
-							<div className="resources-item--rate">{formatResource(rate)}</div>
+							<div className="resources-item--rate">{formatResourceRate(rate)}</div>
 							<div className="resources-item--machines">
 								{resource.recipe && (
 									<>
-										{Math.ceil(rate / outputRatio)}x {resource.recipe.machine}
+										{Math.round((rate / outputRatio) * 10) / 10}x {resource.recipe.machine}
 									</>
 								)}
 							</div>
 							<div className="resources-item--uses">
 								{uses.map((use) => (
 									<div key={use.id} className="resources-item--uses-item">
-										<div className="resources-item--uses-item--rate">{formatResource(use.rate)}</div>
+										<div className="resources-item--uses-item--rate">{formatResourceRate(use.rate)}</div>
 										<div className="resources-item--uses-item--name">{use.id}</div>
 									</div>
 								))}
 							</div>
 							<div className="resources-item--usedby">
-								{resource.explicit && (
+								{!resource.implicit && (
 									<div className="resources-item--usedby-item">
 										<div className="resources-item--usedby-item--rate">
-											{formatResource(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate)}
+											{formatResourceRate(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate)}
 										</div>
 										<div className="resources-item--usedby-item--name">Planner</div>
 									</div>
@@ -244,7 +259,7 @@ const App: FC = () => {
 									.filter((usedBy) => usedBy.id !== resource.id)
 									.map((usedBy) => (
 										<div key={usedBy.id} className="resources-item--usedby-item">
-											<div className="resources-item--usedby-item--rate">{formatResource(usedBy.rate)}</div>
+											<div className="resources-item--usedby-item--rate">{formatResourceRate(usedBy.rate)}</div>
 											<div className="resources-item--usedby-item--name">{usedBy.id}</div>
 										</div>
 									))}
@@ -281,13 +296,6 @@ const App: FC = () => {
 							))}
 						</div>
 					</div>
-				))}
-			</div>
-
-			<div id="components">
-				<h2>Components</h2>
-				{components.map((component) => (
-					<div key={component.id}>{component.id}</div>
 				))}
 			</div>
 		</div>
