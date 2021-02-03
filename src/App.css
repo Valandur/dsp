@@ -28,6 +28,10 @@
 	border-bottom: 1px solid black;
 }
 
+.plan-item.disabled {
+	background-color: lightgray;
+}
+
 .plan-item-header {
 	font-weight: bolder;
 }
@@ -71,6 +75,7 @@
 
 .resources-item--item,
 .resources-item--rate,
+.resources-item--machines,
 .resources-item--uses,
 .resources-item--usedby {
 	flex: 1;
@@ -98,7 +103,7 @@
 
 .resources-item--uses-item--name,
 .resources-item--usedby-item--name {
-	flex: 5;
+	flex: 3;
 }
 
 /** -----------

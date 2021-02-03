@@ -3,7 +3,7 @@ export interface Recipe {
 	inputs: RecipeIngredient[];
 	outputs: RecipeIngredient[];
 	time: number;
-	machines: Machine[];
+	machine: Machine;
 }
 
 export interface RecipeIngredient {

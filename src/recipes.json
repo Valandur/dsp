@@ -1,87 +1,52 @@
 [
 	{
-		"name": "iron_ore",
-		"inputs": [{ "id": "iron_ore_node", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "iron_ore", "amount": 0.5 }],
-		"time": 1,
-		"machines": ["miner"]
-	},
-	{
-		"name": "copper_ore",
-		"inputs": [{ "id": "copper_ore_node", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "copper_ore", "amount": 0.5 }],
-		"time": 1,
-		"machines": ["miner"]
-	},
-	{
-		"name": "titanium_ore",
-		"inputs": [{ "id": "titanium_node", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "titanium_ore", "amount": 0.5 }],
-		"time": 1,
-		"machines": ["miner"]
-	},
-	{
-		"name": "coal_ore",
-		"inputs": [{ "id": "coal_node", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "coal_ore", "amount": 0.5 }],
-		"time": 1,
-		"machines": ["miner"]
-	},
-	{
-		"name": "oil_spring_x1",
-		"inputs": [{ "id": "oil_spring_x1", "amount": 0.01666666666666666666666666666666 }],
-		"outputs": [{ "id": "crude_oil", "amount": 1 }],
-		"time": 1,
-		"machines": ["oil_extractor"]
-	},
-	{
 		"name": "water",
 		"inputs": [{ "id": "water_source", "amount": 0.01666666666666666666666666666666 }],
 		"outputs": [{ "id": "water", "amount": 0.916666666666666666666666666666666 }],
 		"time": 1,
-		"machines": ["water_extractor"]
+		"machine": "water_extractor"
 	},
 	{
 		"name": "iron_ingot",
 		"inputs": [{ "id": "iron_ore", "amount": 1 }],
 		"outputs": [{ "id": "iron_ingot", "amount": 1 }],
 		"time": 1,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "copper_ingot",
 		"inputs": [{ "id": "copper_ore", "amount": 1 }],
 		"outputs": [{ "id": "copper_ingot", "amount": 1 }],
 		"time": 1,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "high_purity_silicon",
 		"inputs": [{ "id": "silicon_ore", "amount": 2 }],
 		"outputs": [{ "id": "high_purity_silicon", "amount": 1 }],
 		"time": 2,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "titanium_ingot",
 		"inputs": [{ "id": "titanium_ore", "amount": 2 }],
 		"outputs": [{ "id": "titanium_ingot", "amount": 1 }],
 		"time": 2,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "stone",
 		"inputs": [{ "id": "stone_ore", "amount": 1 }],
 		"outputs": [{ "id": "stone", "amount": 1 }],
 		"time": 1,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "energetic_graphite",
 		"inputs": [{ "id": "coal_ore", "amount": 2 }],
 		"outputs": [{ "id": "energetic_graphite", "amount": 1 }],
 		"time": 2,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "Plasma Refining",
@@ -91,7 +56,7 @@
 			{ "id": "refined_oil", "amount": 2 }
 		],
 		"time": 4,
-		"machines": ["oil_refinery"]
+		"machine": "oil_refinery"
 	},
 	{
 		"name": "plastic",
@@ -101,7 +66,7 @@
 		],
 		"outputs": [{ "id": "plastic", "amount": 1 }],
 		"time": 3,
-		"machines": ["chemical_lab"]
+		"machine": "chemical_lab"
 	},
 	{
 		"name": "graphene",
@@ -111,14 +76,14 @@
 		],
 		"outputs": [{ "id": "graphene", "amount": 2 }],
 		"time": 3,
-		"machines": ["chemical_lab"]
+		"machine": "chemical_lab"
 	},
 	{
 		"name": "magnet",
 		"inputs": [{ "id": "iron_ore", "amount": 1 }],
 		"outputs": [{ "id": "magnet", "amount": 1 }],
 		"time": 1.5,
-		"machines": ["smelter", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "magnetic_coil",
@@ -128,45 +93,32 @@
 		],
 		"outputs": [{ "id": "magnetic_coil", "amount": 2 }],
 		"time": 1,
-		"machines": ["assembler", "replicator"]
+		"machine": "assembler"
+	},
+	{
+		"name": "titanium_alloy",
+		"inputs": [
+			{ "id": "titanium_ingot", "amount": 4 },
+			{ "id": "steel", "amount": 4 },
+			{ "id": "sulfuric_acid", "amount": 8 }
+		],
+		"outputs": [{ "id": "titanium_alloy", "amount": 4 }],
+		"time": 12,
+		"machine": "assembler"
+	},
+	{
+		"name": "glass",
+		"inputs": [{ "id": "stone_ore", "amount": 2 }],
+		"outputs": [{ "id": "glass", "amount": 1 }],
+		"time": 2,
+		"machine": "smelter"
 	},
 	{
 		"name": "diamond",
 		"inputs": [{ "id": "energetic_graphite", "amount": 1 }],
 		"outputs": [{ "id": "diamond", "amount": 1 }],
 		"time": 2,
-		"machines": ["smelter"]
-	},
-	{
-		"name": "organic_crystal",
-		"inputs": [
-			{ "id": "plastic", "amount": 2 },
-			{ "id": "refined_oil", "amount": 1 },
-			{ "id": "water", "amount": 1 }
-		],
-		"outputs": [{ "id": "organic_crystal", "amount": 1 }],
-		"time": 6,
-		"machines": ["chemical_lab"]
-	},
-	{
-		"name": "titanium_crystal",
-		"inputs": [
-			{ "id": "titanium_ingot", "amount": 3 },
-			{ "id": "organic_crystal", "amount": 1 }
-		],
-		"outputs": [{ "id": "titanium_crystal", "amount": 1 }],
-		"time": 4,
-		"machines": ["assembler", "replicator"]
-	},
-	{
-		"name": "circuit_board",
-		"inputs": [
-			{ "id": "copper_ingot", "amount": 1 },
-			{ "id": "iron_ingot", "amount": 2 }
-		],
-		"outputs": [{ "id": "circuit_board", "amount": 2 }],
-		"time": 1,
-		"machines": ["assembler", "replicator"]
+		"machine": "smelter"
 	},
 	{
 		"name": "X-Ray Cracking",
@@ -179,7 +131,135 @@
 			{ "id": "energetic_graphite", "amount": 1 }
 		],
 		"time": 4,
-		"machines": ["oil_refinery"]
+		"machine": "oil_refinery"
+	},
+	{
+		"name": "organic_crystal",
+		"inputs": [
+			{ "id": "plastic", "amount": 2 },
+			{ "id": "refined_oil", "amount": 1 },
+			{ "id": "water", "amount": 1 }
+		],
+		"outputs": [{ "id": "organic_crystal", "amount": 1 }],
+		"time": 6,
+		"machine": "chemical_lab"
+	},
+	{
+		"name": "electric_motor",
+		"inputs": [
+			{ "id": "iron_ingot", "amount": 2 },
+			{ "id": "gear", "amount": 1 },
+			{ "id": "magnetic_coil", "amount": 1 }
+		],
+		"outputs": [{ "id": "electric_motor", "amount": 1 }],
+		"time": 2,
+		"machine": "assembler"
+	},
+	{
+		"name": "prism",
+		"inputs": [{ "id": "glass", "amount": 3 }],
+		"outputs": [{ "id": "prism", "amount": 2 }],
+		"time": 2,
+		"machine": "assembler"
+	},
+	{
+		"name": "titanium_crystal",
+		"inputs": [
+			{ "id": "titanium_ingot", "amount": 3 },
+			{ "id": "organic_crystal", "amount": 1 }
+		],
+		"outputs": [{ "id": "titanium_crystal", "amount": 1 }],
+		"time": 4,
+		"machine": "assembler"
+	},
+	{
+		"name": "gear",
+		"inputs": [{ "id": "iron_ingot", "amount": 1 }],
+		"outputs": [{ "id": "gear", "amount": 1 }],
+		"time": 1,
+		"machine": "assembler"
+	},
+	{
+		"name": "electromagnetic_turbine",
+		"inputs": [
+			{ "id": "electric_motor", "amount": 2 },
+			{ "id": "magnetic_coil", "amount": 2 }
+		],
+		"outputs": [{ "id": "electromagnetic_turbine", "amount": 1 }],
+		"time": 2,
+		"machine": "assembler"
+	},
+	{
+		"name": "circuit_board",
+		"inputs": [
+			{ "id": "copper_ingot", "amount": 1 },
+			{ "id": "iron_ingot", "amount": 2 }
+		],
+		"outputs": [{ "id": "circuit_board", "amount": 2 }],
+		"time": 1,
+		"machine": "assembler"
+	},
+	{
+		"name": "sulfuric_acid",
+		"inputs": [
+			{ "id": "refined_oil", "amount": 6 },
+			{ "id": "stone_ore", "amount": 8 },
+			{ "id": "water", "amount": 4 }
+		],
+		"outputs": [{ "id": "sulfuric_acid", "amount": 4 }],
+		"time": 6,
+		"machine": "chemical_lab"
+	},
+	{
+		"name": "processor",
+		"inputs": [
+			{ "id": "circuit_board", "amount": 2 },
+			{ "id": "microcrystalline_component", "amount": 2 }
+		],
+		"outputs": [{ "id": "processor", "amount": 1 }],
+		"time": 3,
+		"machine": "assembler"
+	},
+	{
+		"name": "particle_container",
+		"inputs": [
+			{ "id": "electromagnetic_turbine", "amount": 2 },
+			{ "id": "copper_ingot", "amount": 2 },
+			{ "id": "graphene", "amount": 2 }
+		],
+		"outputs": [{ "id": "particle_container", "amount": 1 }],
+		"time": 4,
+		"machine": "assembler"
+	},
+	{
+		"name": "solar_sail",
+		"inputs": [
+			{ "id": "graphene", "amount": 1 },
+			{ "id": "photon_combiner", "amount": 1 }
+		],
+		"outputs": [{ "id": "solar_sail", "amount": 2 }],
+		"time": 4,
+		"machine": "assembler"
+	},
+	{
+		"name": "photon_combiner",
+		"inputs": [
+			{ "id": "circuit_board", "amount": 1 },
+			{ "id": "prism", "amount": 2 }
+		],
+		"outputs": [{ "id": "photon_combiner", "amount": 1 }],
+		"time": 3,
+		"machine": "assembler"
+	},
+	{
+		"name": "microcrystalline_component",
+		"inputs": [
+			{ "id": "high_purity_silicon", "amount": 2 },
+			{ "id": "copper_ingot", "amount": 1 }
+		],
+		"outputs": [{ "id": "microcrystalline_component", "amount": 1 }],
+		"time": 2,
+		"machine": "assembler"
 	},
 	{
 		"name": "electromagnetic_matrix",
@@ -189,7 +269,7 @@
 		],
 		"outputs": [{ "id": "electromagnetic_matrix", "amount": 1 }],
 		"time": 3,
-		"machines": ["matrix_lab", "replicator"]
+		"machine": "matrix_lab"
 	},
 	{
 		"name": "energy_matrix",
@@ -199,7 +279,7 @@
 		],
 		"outputs": [{ "id": "energy_matrix", "amount": 1 }],
 		"time": 6,
-		"machines": ["matrix_lab", "replicator"]
+		"machine": "matrix_lab"
 	},
 	{
 		"name": "structure_matrix",
@@ -209,6 +289,6 @@
 		],
 		"outputs": [{ "id": "structure_matrix", "amount": 1 }],
 		"time": 8,
-		"machines": ["matrix_lab", "replicator"]
+		"machine": "matrix_lab"
 	}
 ]
