@@ -1,6 +1,6 @@
 {
 	"short_name": "DSP Calculator",
-	"name": "Dyson Space Program Calculator",
+	"name": "Dyson Sphere Program Calculator",
 	"icons": [],
 	"start_url": ".",
 	"display": "standalone",
