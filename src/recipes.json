@@ -138,6 +138,16 @@
 		"machine": "chemical_lab"
 	},
 	{
+		"name": "graphene_advanced",
+		"inputs": [{ "id": "fire_ice", "amount": 2 }],
+		"outputs": [
+			{ "id": "graphene", "amount": 2 },
+			{ "id": "hydrogen", "amount": 1 }
+		],
+		"time": 2,
+		"machine": "chemical_lab"
+	},
+	{
 		"name": "steel",
 		"inputs": [{ "id": "iron_ingot", "amount": 3 }],
 		"outputs": [{ "id": "steel", "amount": 1 }],
