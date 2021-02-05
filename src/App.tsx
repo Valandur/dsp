@@ -11,24 +11,26 @@ interface ComponentRecipes {
 	asOutput: Recipe[];
 }
 
+interface Plan {
+	rate: number;
+	disabled: boolean;
+}
+
 interface Resource {
-	id: string;
 	recipe: Recipe | null;
-	implicit: boolean;
 	external: boolean;
+	implicit: boolean;
 	usedBy: Map<string, number>;
 	uses: Map<string, number>;
 }
 
-interface Setting {
-	id: string;
-	rate?: number;
-	disabled?: boolean;
+interface ResourceSetting {
 	external?: boolean;
 	recipe?: string;
 }
 
-interface QueuedSetting extends Setting {
+interface PlanQueueItem extends Plan {
+	id: string;
 	implicit: boolean;
 }
 
@@ -55,112 +57,125 @@ for (const recipe of recipes) {
 const components = [...recipesByComponent.values()].sort((a, b) => a.id.localeCompare(b.id));
 
 const App: FC = () => {
-	const [resources, setResources] = useState<Resource[]>([]);
-	const [settings, setSettings] = useState<Map<string, Setting>>(new Map());
+	const [plans, setPlans] = useState<Map<string, Plan>>(new Map());
+	const [settings, setSettings] = useState<Map<string, ResourceSetting>>(new Map());
+	const [resources, setResources] = useState<Map<string, Resource>>(new Map());
 	const [newId, setNewId] = useState('electromagnetic_matrix');
 	const [newRate, setNewRate] = useState(1);
 	const [displayFactor, setDisplayFactor] = useState(60);
+	const [fractionDigits, setFractionalDigits] = useState(1);
 
-	const changeSetting = useCallback((id: string, newSettings: Partial<Omit<Setting, 'id'>>) => {
-		setSettings((settings) => new Map(settings.set(id, { id, ...settings.get(id), ...newSettings })));
-	}, []);
-	const formatResourceRate = useCallback((num: number) => (num * displayFactor).toFixed(1), [displayFactor]);
+	const updatePlan = useCallback(
+		(id: string, plan: Partial<Plan>) => setPlans((plans) => new Map(plans.set(id, { ...plans.get(id)!, ...plan }))),
+		[setPlans]
+	);
+	const removePlan = useCallback(
+		(id: string) =>
+			setPlans((plans) => {
+				plans.delete(id);
+				return new Map(plans);
+			}),
+		[setPlans]
+	);
+
+	const changeResourceSetting = useCallback(
+		(id: string, newSettings: Partial<ResourceSetting>) =>
+			setSettings((settings) => new Map(settings.set(id, { ...settings.get(id), ...newSettings }))),
+		[setSettings]
+	);
+
+	const formatResourceRate = useCallback((num: number) => (num * displayFactor).toFixed(fractionDigits), [
+		displayFactor,
+		fractionDigits
+	]);
 
 	useEffect(() => {
-		// Reset all resources
 		const newResources = new Map<string, Resource>();
 
-		const queuedSettings: QueuedSetting[] = [...settings.values()]
-			.filter((setting) => !setting.disabled)
-			.map((setting) => ({ ...setting, implicit: false }));
+		const planQueue: PlanQueueItem[] = [...plans]
+			.filter(([, plan]) => !plan.disabled)
+			.map(([planId, plan]) => ({ ...plan, id: planId, implicit: false }));
 		let i = 0;
-		while (queuedSettings.length > 0) {
+		while (planQueue.length > 0) {
 			i++; // Safety to stop endless loops
-			const setting = queuedSettings.shift();
-			if (!setting || i > 1000) {
+			const plan = planQueue.shift();
+			if (!plan || i > 1000) {
 				break;
 			}
 
-			const recipes = recipesByComponent.get(setting.id)?.asOutput;
+			const recipes = recipesByComponent.get(plan.id)?.asOutput;
 			if (!recipes || recipes.length === 0) {
 				continue;
 			}
 
-			let outputResource = newResources.get(setting.id);
+			let outputResource = newResources.get(plan.id);
 			if (!outputResource) {
 				outputResource = {
-					id: setting.id,
 					recipe: null,
-					implicit: true,
 					external: false,
+					implicit: true,
 					usedBy: new Map(),
 					uses: new Map()
 				};
-				newResources.set(outputResource.id, outputResource);
+				newResources.set(plan.id, outputResource);
 			}
 
-			const recipe = outputResource.recipe || recipes.find((r) => r.name === setting.recipe) || recipes[0];
+			const setting = settings.get(plan.id);
+			const recipe = recipes.find((r) => r.name === setting?.recipe) || recipes[0];
 			if (!outputResource.recipe) {
 				outputResource.recipe = recipe;
 			}
 
-			if (setting.external) {
+			if (setting?.external) {
 				outputResource.external = true;
 				continue;
 			}
 
-			if (!setting.rate) {
-				continue;
-			}
-
-			if (!setting.implicit) {
+			if (!plan.implicit) {
 				outputResource.implicit = false;
-				outputResource.usedBy.set(setting.id, (outputResource.usedBy.get(setting.id) || 0) + setting.rate);
+				outputResource.usedBy.set(plan.id, (outputResource.usedBy.get(plan.id) || 0) + plan.rate);
 			}
 
-			const outputRatio = recipe.outputs.find((output) => output.id === setting.id)!.amount / recipe.time;
+			const outputRatio = recipe.outputs.find((output) => output.id === plan.id)!.amount / recipe.time;
 
 			for (const input of recipe.inputs) {
-				const neededRate = (setting.rate / outputRatio) * (input.amount / recipe.time);
+				const neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
 				outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
 
 				if (!outputResource.external) {
 					let inputResource = newResources.get(input.id);
 					if (!inputResource) {
 						inputResource = {
-							id: input.id,
 							recipe: null,
-							implicit: true,
 							external: false,
+							implicit: true,
 							usedBy: new Map(),
 							uses: new Map()
 						};
-						newResources.set(inputResource.id, inputResource);
+						newResources.set(input.id, inputResource);
 					}
 
 					// Break loops
-					if (outputResource.id === inputResource.id) {
+					if (plan.id === input.id) {
 						continue;
 					}
 
-					inputResource.usedBy.set(setting.id, (inputResource.usedBy.get(setting.id) || 0) + neededRate);
-					queuedSettings.push({
+					inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
+					planQueue.push({
 						id: input.id,
 						rate: neededRate,
-						recipe: recipe.name,
 						disabled: false,
-						implicit: true,
-						external: false
+						implicit: true
 					});
 				}
 			}
 		}
-		setResources([...newResources.values()]);
-	}, [settings]);
+		setResources(newResources);
+	}, [plans, settings]);
 
 	return (
 		<div id="main">
-			<h1>Dyson Sphere Program</h1>
+			<h1>Dyson Sphere Program Calculator</h1>
 
 			<div id="settings">
 				<h2>Settings</h2>
@@ -168,6 +183,12 @@ const App: FC = () => {
 					<div className="settings-item--name">Rate [s]</div>
 					<div className="settings-item--value">
 						<input type="number" value={displayFactor} onChange={(e) => setDisplayFactor(Number(e.target.value))} />
+					</div>
+				</div>
+				<div className="settings-item">
+					<div className="settings-item--name">Fractional Digits</div>
+					<div className="settings-item--value">
+						<input type="number" value={fractionDigits} onChange={(e) => setFractionalDigits(Number(e.target.value))} />
 					</div>
 				</div>
 			</div>
@@ -198,21 +219,28 @@ const App: FC = () => {
 						/>
 					</div>
 					<div className="plan-item--action">
-						<button onClick={() => changeSetting(newId, { disabled: false, rate: newRate })}>+</button>
+						<button onClick={() => updatePlan(newId, { rate: newRate })}>Add</button>
 					</div>
 				</div>
-				{[...settings.values()]
-					.filter((setting) => !!setting.rate || setting.recipe)
-					.map((setting) => (
-						<div className={'plan-item' + (setting.disabled ? ' disabled' : '')} key={setting.id}>
-							<div className="plan-item--item">{setting.id}</div>
-							<div className="plan-item--rate">{setting.rate && setting.rate * displayFactor}</div>
-							<div className="plan-item--action">
-								<button onClick={() => changeSetting(setting.id, { disabled: !setting.disabled })}>T</button>{' '}
-								<button onClick={() => changeSetting(setting.id, { rate: undefined })}>-</button>
-							</div>
+				{[...plans].map(([planId, plan]) => (
+					<div className={'plan-item' + (plan.disabled ? ' disabled' : '')} key={planId}>
+						<div className="plan-item--item">{planId}</div>
+						<div className="plan-item--rate">
+							<input
+								type="number"
+								placeholder="Target rate"
+								value={plan.rate * displayFactor}
+								onChange={(e) => updatePlan(planId, { rate: Number(e.target.value) / displayFactor })}
+							/>
 						</div>
-					))}
+						<div className="plan-item--action">
+							<button onClick={() => updatePlan(planId, { disabled: !plan.disabled })}>
+								{plan.disabled ? 'Enable' : 'Disable'}
+							</button>
+							<button onClick={() => removePlan(planId)}>Remove</button>
+						</div>
+					</div>
+				))}
 			</div>
 
 			<div id="resources">
@@ -225,60 +253,60 @@ const App: FC = () => {
 					<div className="resources-item--uses">Uses</div>
 					<div className="resources-item--usedby">Used By</div>
 				</div>
-				{resources
-					.filter((resource) => resource.usedBy.size > 0)
-					.map((resource) => {
+				{[...resources]
+					.filter(([, resource]) => resource.usedBy.size > 0)
+					.map(([resourceId, resource]) => {
 						const uses = [...resource.uses.entries()].map((e) => ({ id: e[0], rate: e[1] }));
 						const usedBy = [...resource.usedBy.entries()].map((e) => ({ id: e[0], rate: e[1] }));
 						const rate = usedBy.reduce((acc, res) => acc + res.rate, 0);
-						const recipes = recipesByComponent.get(resource.id)?.asOutput;
+						const recipes = recipesByComponent.get(resourceId)?.asOutput;
 						const outputRatio = resource.recipe
-							? resource.recipe.outputs.find((output) => output.id === resource.id)!.amount / resource.recipe.time
+							? resource.recipe.outputs.find((output) => output.id === resourceId)!.amount / resource.recipe.time
 							: 1;
 
 						const className =
 							'resources-item' + (!resource.implicit ? ' explicit' : '') + (resource.external ? ' external' : '');
 
 						return (
-							<div className={className} key={resource.id}>
+							<div className={className} key={resourceId}>
 								<div className="resources-item--action">
-									{resource.implicit ? (
-										<button onClick={() => changeSetting(resource.id, { external: !resource.external })}>E</button>
-									) : (
-										<div />
-									)}
-									{recipes && recipes.length > 1 && (
-										<select
-											value={resource.recipe?.name}
-											onChange={(e) => changeSetting(resource.id, { recipe: e.target.value })}
-										>
-											{recipes.map((recipe) => (
-												<option value={recipe.name} key={recipe.name}>
-													{recipe.name}
-												</option>
-											))}
-										</select>
+									{resource.implicit && (
+										<button onClick={() => changeResourceSetting(resourceId, { external: !resource.external })}>
+											External
+										</button>
 									)}
 								</div>
-								<div className="resources-item--item">{resource.id}</div>
+								<div className="resources-item--item">
+									<div>{resourceId}</div>
+									{recipes && recipes.length > 1 && (
+										<div>
+											<select
+												value={resource.recipe?.name}
+												onChange={(e) => changeResourceSetting(resourceId, { recipe: e.target.value })}
+											>
+												{recipes.map((recipe) => (
+													<option value={recipe.name} key={recipe.name}>
+														{recipe.name}
+													</option>
+												))}
+											</select>
+										</div>
+									)}
+								</div>
 								<div className="resources-item--rate">{formatResourceRate(rate)}</div>
 								<div className="resources-item--machines">
-									{resource.recipe && (
-										<>
-											{Math.round((rate / outputRatio) * 10) / 10}x {resource.recipe.machine}
-										</>
-									)}
+									{resource.recipe && `${(rate / outputRatio).toFixed(1)}x ${resource.recipe.machine}`}
 								</div>
 								<div className="resources-item--uses">
 									{uses.map((use) => (
 										<div
 											key={use.id}
-											className={'resources-item--uses-item' + (use.id === resource.id ? ' recursive' : '')}
+											className={'resources-item--uses-item' + (use.id === resourceId ? ' recursive' : '')}
 										>
 											<div className="resources-item--uses-item--rate">{formatResourceRate(use.rate)}</div>
 											<div className="resources-item--uses-item--name">
 												{use.id}
-												{use.id === resource.id && ' 🔁'}
+												{use.id === resourceId && ' 🔁'}
 											</div>
 										</div>
 									))}
@@ -287,13 +315,13 @@ const App: FC = () => {
 									{!resource.implicit && (
 										<div className="resources-item--usedby-item">
 											<div className="resources-item--usedby-item--rate">
-												{formatResourceRate(usedBy.find((usedBy) => usedBy.id === resource.id)!.rate)}
+												{formatResourceRate(usedBy.find((usedBy) => usedBy.id === resourceId)!.rate)}
 											</div>
 											<div className="resources-item--usedby-item--name">Planner</div>
 										</div>
 									)}
 									{usedBy
-										.filter((usedBy) => usedBy.id !== resource.id)
+										.filter((usedBy) => usedBy.id !== resourceId)
 										.map((usedBy) => (
 											<div key={usedBy.id} className="resources-item--usedby-item">
 												<div className="resources-item--usedby-item--rate">{formatResourceRate(usedBy.rate)}</div>
@@ -310,8 +338,9 @@ const App: FC = () => {
 				<h2>Recipes</h2>
 				<div className="recipes-item-header">
 					<div className="recipes-item--name">Name</div>
-					<div className="recipes-item--inputs">Inputs [1/min]</div>
-					<div className="recipes-item--outputs">Outputs [1/min]</div>
+					<div className="recipes-item--inputs">Inputs [1/{displayFactor}s]</div>
+					<div className="recipes-item--time">Time [s]</div>
+					<div className="recipes-item--outputs">Outputs [1/{displayFactor}s]</div>
 				</div>
 				{recipes.map((recipe, i) => (
 					<div key={i} className="recipes-item">
@@ -319,15 +348,20 @@ const App: FC = () => {
 						<div className="recipes-item--inputs">
 							{recipe.inputs.map((input) => (
 								<div key={input.id} className="recipes-item--inputs-item">
-									<div className="recipes-item--inputs-item--amount">{(input.amount * 60) / recipe.time}</div>
+									<div className="recipes-item--inputs-item--amount">
+										{((input.amount * displayFactor) / recipe.time).toFixed(fractionDigits)}
+									</div>
 									<div className="recipes-item--inputs-item--name">{input.id}</div>
 								</div>
 							))}
 						</div>
+						<div className="recipes-item--time">{recipe.time}</div>
 						<div className="recipes-item--outputs">
 							{recipe.outputs.map((output) => (
 								<div key={output.id} className="recipes-item--outputs-item">
-									<div className="recipes-item--outputs-item--amount">{(output.amount * 60) / recipe.time}</div>
+									<div className="recipes-item--outputs-item--amount">
+										{((output.amount * displayFactor) / recipe.time).toFixed(fractionDigits)}
+									</div>
 									<div className="recipes-item--outputs-item--name">{output.id}</div>
 								</div>
 							))}
