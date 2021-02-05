@@ -89,6 +89,13 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "crystal_silicon",
+		"inputs": [{ "id": "high_purity_silicon", "amount": 1 }],
+		"outputs": [{ "id": "crystal_silicon", "amount": 2 }],
+		"time": 2,
+		"machine": "smelter"
+	},
+	{
 		"name": "titanium_alloy",
 		"inputs": [
 			{ "id": "titanium_ingot", "amount": 4 },
@@ -166,6 +173,24 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "crystal_silicon_advanced",
+		"inputs": [{ "id": "fractal_silicon", "amount": 1 }],
+		"outputs": [{ "id": "crystal_silicon", "amount": 1 }],
+		"time": 4,
+		"machine": "assembler"
+	},
+	{
+		"name": "titanium_glass",
+		"inputs": [
+			{ "id": "glass", "amount": 2 },
+			{ "id": "titanium_ingot", "amount": 2 },
+			{ "id": "water", "amount": 2 }
+		],
+		"outputs": [{ "id": "titanium_glass", "amount": 2 }],
+		"time": 5,
+		"machine": "assembler"
+	},
+	{
 		"name": "prism",
 		"inputs": [{ "id": "glass", "amount": 3 }],
 		"outputs": [{ "id": "prism", "amount": 2 }],
@@ -211,6 +236,13 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "silicon_ore",
+		"inputs": [{ "id": "stone_ore", "amount": 10 }],
+		"outputs": [{ "id": "silicon_ore", "amount": 1 }],
+		"time": 10,
+		"machine": "smelter"
+	},
+	{
 		"name": "circuit_board",
 		"inputs": [
 			{ "id": "copper_ingot", "amount": 1 },
@@ -247,6 +279,16 @@
 		"outputs": [{ "id": "deuterium", "amount": 5 }],
 		"time": 5,
 		"machine": "particle_collider"
+	},
+	{
+		"name": "plane_filter",
+		"inputs": [
+			{ "id": "casimir_crystal", "amount": 2 },
+			{ "id": "titanium_glass", "amount": 2 }
+		],
+		"outputs": [{ "id": "plane_filter", "amount": 1 }],
+		"time": 12,
+		"machine": "assembler"
 	},
 	{
 		"name": "carbon_nanotube",
@@ -288,6 +330,17 @@
 		],
 		"outputs": [{ "id": "processor", "amount": 1 }],
 		"time": 3,
+		"machine": "assembler"
+	},
+	{
+		"name": "casimir_crystal",
+		"inputs": [
+			{ "id": "titanium_crystal", "amount": 2 },
+			{ "id": "graphene", "amount": 2 },
+			{ "id": "hydrogen", "amount": 12 }
+		],
+		"outputs": [{ "id": "casimir_crystal", "amount": 1 }],
+		"time": 4,
 		"machine": "assembler"
 	},
 	{
@@ -339,6 +392,16 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "quantum_processor",
+		"inputs": [
+			{ "id": "processor", "amount": 2 },
+			{ "id": "plane_filter", "amount": 2 }
+		],
+		"outputs": [{ "id": "quantum_processor", "amount": 2 }],
+		"time": 6,
+		"machine": "assembler"
+	},
+	{
 		"name": "electromagnetic_matrix",
 		"inputs": [
 			{ "id": "magnetic_coil", "amount": 1 },
@@ -376,6 +439,16 @@
 		],
 		"outputs": [{ "id": "information_matrix", "amount": 1 }],
 		"time": 10,
+		"machine": "matrix_lab"
+	},
+	{
+		"name": "gravity_matrix",
+		"inputs": [
+			{ "id": "graviton_lens", "amount": 1 },
+			{ "id": "quantum_processor", "amount": 1 }
+		],
+		"outputs": [{ "id": "gravity_matrix", "amount": 2 }],
+		"time": 24,
 		"machine": "matrix_lab"
 	}
 ]
