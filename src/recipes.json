@@ -402,6 +402,17 @@
 		"machine": "assembler"
 	},
 	{
+		"name": "casimir_crystal_advanced",
+		"inputs": [
+			{ "id": "optical_grating_crystal", "amount": 6 },
+			{ "id": "graphene", "amount": 2 },
+			{ "id": "hydrogen", "amount": 12 }
+		],
+		"outputs": [{ "id": "casimir_crystal", "amount": 1 }],
+		"time": 4,
+		"machine": "assembler"
+	},
+	{
 		"name": "electromagnetic_matrix",
 		"inputs": [
 			{ "id": "magnetic_coil", "amount": 1 },
