@@ -272,7 +272,7 @@ const App: FC = () => {
 								<div className="resources-item--action">
 									{resource.implicit && (
 										<button onClick={() => changeResourceSetting(resourceId, { external: !resource.external })}>
-											External
+											{resource.external ? 'Produce Locally' : 'Produce Externally'}
 										</button>
 									)}
 								</div>
