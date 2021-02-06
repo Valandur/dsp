@@ -4,4 +4,4 @@
 npm run build
 rm -rf ./docs
 cp -rf ./build/. ./docs
-git add docs/*
+git add ./docs/*
