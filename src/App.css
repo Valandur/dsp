@@ -9,6 +9,7 @@
 #settings,
 #plan,
 #resources,
+#sankey,
 #recipes {
 	padding-bottom: 1em;
 	margin-bottom: 1em;
@@ -72,6 +73,13 @@
 	flex-direction: column;
 	justify-content: center;
 	padding: 0.2em 1em;
+}
+
+/** -----------
+ SANKEY
+ **/
+#sankey {
+	background-color: white;
 }
 
 /** -----------

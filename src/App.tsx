@@ -1,8 +1,11 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
-import './App.css';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { Sankey } from 'react-vis';
+import randomColor from 'randomcolor';
 
+import 'react-vis/dist/style.css';
 import recipes from './recipes.json';
 
+import './App.css';
 import { Recipe } from './Recipe';
 
 interface ComponentRecipes {
@@ -32,6 +35,22 @@ interface ResourceSetting {
 interface PlanQueueItem extends Plan {
 	id: string;
 	implicit: boolean;
+}
+
+interface Node {
+	name: string;
+	color?: string;
+	opacity?: number;
+	key?: string;
+}
+
+interface Link {
+	source: number;
+	target: number;
+	value: number;
+	color?: string;
+	opacity?: number;
+	key?: string;
 }
 
 const recipesByComponent: Map<string, ComponentRecipes> = new Map();
@@ -64,6 +83,9 @@ const App: FC = () => {
 	const [newRate, setNewRate] = useState(1);
 	const [displayFactor, setDisplayFactor] = useState(60);
 	const [fractionDigits, setFractionalDigits] = useState(1);
+	const sankey = useRef<HTMLDivElement>(null);
+	const [nodes, setNodes] = useState<Node[]>([]);
+	const [links, setLinks] = useState<Link[]>([]);
 
 	const updatePlan = useCallback(
 		(id: string, plan: Partial<Plan>) => setPlans((plans) => new Map(plans.set(id, { ...plans.get(id)!, ...plan }))),
@@ -142,25 +164,21 @@ const App: FC = () => {
 				const neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
 				outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
 
-				if (!outputResource.external) {
-					let inputResource = newResources.get(input.id);
-					if (!inputResource) {
-						inputResource = {
-							recipe: null,
-							external: false,
-							implicit: true,
-							usedBy: new Map(),
-							uses: new Map()
-						};
-						newResources.set(input.id, inputResource);
-					}
+				let inputResource = newResources.get(input.id);
+				if (!inputResource) {
+					inputResource = {
+						recipe: null,
+						external: false,
+						implicit: true,
+						usedBy: new Map(),
+						uses: new Map()
+					};
+					newResources.set(input.id, inputResource);
+				}
 
-					// Break loops
-					if (plan.id === input.id) {
-						continue;
-					}
+				inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
 
-					inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
+				if (!outputResource.external && plan.id !== input.id) {
 					planQueue.push({
 						id: input.id,
 						rate: neededRate,
@@ -170,6 +188,32 @@ const App: FC = () => {
 				}
 			}
 		}
+
+		const newNodes: Node[] = [];
+		const newLinks: Link[] = [];
+		const idMap: Map<string, number> = new Map();
+
+		for (const [resourceId] of newResources) {
+			const id = newNodes.length;
+			idMap.set(resourceId, id);
+			const color = randomColor();
+			newNodes.push({ name: resourceId, color });
+		}
+
+		for (const [resourceId, resource] of newResources) {
+			for (const [link, amount] of resource.usedBy) {
+				const source = idMap.get(resourceId);
+				const target = idMap.get(link);
+				if (typeof source !== 'number' || typeof target !== 'number' || source === target) {
+					continue;
+				}
+				newLinks.push({ source, target, value: amount, color: newNodes[source].color });
+			}
+		}
+
+		setNodes(newNodes);
+		setLinks(newLinks);
+
 		setResources(newResources);
 	}, [plans, settings]);
 
@@ -241,6 +285,19 @@ const App: FC = () => {
 						</div>
 					</div>
 				))}
+			</div>
+
+			<div id="sankey" ref={sankey}>
+				<h2>Sankey</h2>
+				{nodes.length > 0 && (
+					<Sankey
+						nodePadding={20}
+						nodes={nodes}
+						links={links}
+						width={sankey.current?.getBoundingClientRect().width || 0}
+						height={800}
+					/>
+				)}
 			</div>
 
 			<div id="resources">
