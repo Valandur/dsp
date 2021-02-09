@@ -161,7 +161,7 @@ const App: FC = () => {
 			const outputRatio = recipe.outputs.find((output) => output.id === plan.id)!.amount / recipe.time;
 
 			for (const input of recipe.inputs) {
-				const neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
+				let neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
 				outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
 
 				let inputResource = newResources.get(input.id);
@@ -189,18 +189,24 @@ const App: FC = () => {
 			}
 		}
 
+		setResources(newResources);
+	}, [plans, settings]);
+
+	useEffect(() => {
 		const newNodes: Node[] = [];
 		const newLinks: Link[] = [];
 		const idMap: Map<string, number> = new Map();
 
-		for (const [resourceId] of newResources) {
+		for (const [resourceId, resource] of resources) {
 			const id = newNodes.length;
 			idMap.set(resourceId, id);
 			const color = randomColor();
-			newNodes.push({ name: resourceId, color });
+			const usedBy = [...resource.usedBy.entries()].map((e) => ({ id: e[0], rate: e[1] }));
+			const rate = usedBy.reduce((acc, res) => acc + res.rate, 0);
+			newNodes.push({ name: `${resourceId} (${formatResourceRate(rate)})`, color });
 		}
 
-		for (const [resourceId, resource] of newResources) {
+		for (const [resourceId, resource] of resources) {
 			for (const [link, amount] of resource.usedBy) {
 				const source = idMap.get(resourceId);
 				const target = idMap.get(link);
@@ -213,9 +219,7 @@ const App: FC = () => {
 
 		setNodes(newNodes);
 		setLinks(newLinks);
-
-		setResources(newResources);
-	}, [plans, settings]);
+	}, [formatResourceRate, resources]);
 
 	return (
 		<div id="main">
@@ -224,9 +228,9 @@ const App: FC = () => {
 			<div id="settings">
 				<h2>Settings</h2>
 				<div className="settings-item">
-					<div className="settings-item--name">Rate [s]</div>
+					<div className="settings-item--name">Rate</div>
 					<div className="settings-item--value">
-						<input type="number" value={displayFactor} onChange={(e) => setDisplayFactor(Number(e.target.value))} />
+						<input type="number" value={displayFactor} onChange={(e) => setDisplayFactor(Number(e.target.value))} /> s
 					</div>
 				</div>
 				<div className="settings-item">
@@ -317,9 +321,14 @@ const App: FC = () => {
 						const usedBy = [...resource.usedBy.entries()].map((e) => ({ id: e[0], rate: e[1] }));
 						const rate = usedBy.reduce((acc, res) => acc + res.rate, 0);
 						const recipes = recipesByComponent.get(resourceId)?.asOutput;
-						const outputRatio = resource.recipe
-							? resource.recipe.outputs.find((output) => output.id === resourceId)!.amount / resource.recipe.time
-							: 1;
+						let neededMachines = 0;
+						let produced = rate;
+						if (resource.recipe) {
+							const outputRatio =
+								resource.recipe.outputs.find((output) => output.id === resourceId)!.amount / resource.recipe.time;
+							neededMachines = Math.ceil(rate / outputRatio);
+							produced = neededMachines * outputRatio;
+						}
 
 						const className =
 							'resources-item' + (!resource.implicit ? ' explicit' : '') + (resource.external ? ' external' : '');
@@ -329,7 +338,7 @@ const App: FC = () => {
 								<div className="resources-item--action">
 									{resource.implicit && (
 										<button onClick={() => changeResourceSetting(resourceId, { external: !resource.external })}>
-											{resource.external ? 'Produce Locally' : 'Produce Externally'}
+											{resource.external ? 'Local' : 'External'}
 										</button>
 									)}
 								</div>
@@ -352,7 +361,8 @@ const App: FC = () => {
 								</div>
 								<div className="resources-item--rate">{formatResourceRate(rate)}</div>
 								<div className="resources-item--machines">
-									{resource.recipe && `${(rate / outputRatio).toFixed(1)}x ${resource.recipe.machine}`}
+									{resource.recipe && `${neededMachines}x ${resource.recipe.machine}`}
+									{produced !== rate && ` (+${formatResourceRate(produced - rate)} extra)`}
 								</div>
 								<div className="resources-item--uses">
 									{uses.map((use) => (

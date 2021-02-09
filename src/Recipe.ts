@@ -11,4 +11,4 @@ export interface RecipeIngredient {
 	amount: number;
 }
 
-export type Machine = 'replicator' | 'smelter' | 'oil_refinery';
+export type Machine = 'replicator' | 'smelter' | 'oil_refinery' | 'miner';
