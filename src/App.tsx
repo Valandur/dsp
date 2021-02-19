@@ -75,10 +75,115 @@ for (const recipe of recipes) {
 
 const components = [...recipesByComponent.values()].sort((a, b) => a.id.localeCompare(b.id));
 
+const initPlans: Map<string, Plan> = new Map();
+const initSettings: Map<string, ResourceSetting> = new Map();
+if (window.localStorage) {
+	const rawPlans = window.localStorage.getItem('plans');
+	if (rawPlans) {
+		try {
+			const jsonPlans = JSON.parse(rawPlans);
+			for (const plan of jsonPlans) {
+				initPlans.set(plan[0], plan[1]);
+			}
+		} catch {}
+	}
+
+	const rawSettings = window.localStorage.getItem('settings');
+	if (rawSettings) {
+		try {
+			const jsonSettings = JSON.parse(rawSettings);
+			for (const setting of jsonSettings) {
+				initSettings.set(setting[0], setting[1]);
+			}
+		} catch {}
+	}
+}
+
+const calcResources = (plans: Map<string, Plan>, settings: Map<string, ResourceSetting>) => {
+	const newResources = new Map<string, Resource>();
+
+	const planQueue: PlanQueueItem[] = [...plans]
+		.filter(([, plan]) => !plan.disabled)
+		.map(([planId, plan]) => ({ ...plan, id: planId, implicit: false }));
+	let i = 0;
+	while (planQueue.length > 0) {
+		i++; // Safety to stop endless loops
+		const plan = planQueue.shift();
+		if (!plan || i > 1000) {
+			break;
+		}
+
+		const recipes = recipesByComponent.get(plan.id)?.asOutput;
+		if (!recipes || recipes.length === 0) {
+			continue;
+		}
+
+		let outputResource = newResources.get(plan.id);
+		if (!outputResource) {
+			outputResource = {
+				recipe: null,
+				external: false,
+				implicit: true,
+				usedBy: new Map(),
+				uses: new Map()
+			};
+			newResources.set(plan.id, outputResource);
+		}
+
+		const setting = settings.get(plan.id);
+		const recipe = recipes.find((r) => r.name === setting?.recipe) || recipes[0];
+		if (!outputResource.recipe) {
+			outputResource.recipe = recipe;
+		}
+
+		if (setting?.external) {
+			outputResource.external = true;
+			continue;
+		}
+
+		if (!plan.implicit) {
+			outputResource.implicit = false;
+			outputResource.usedBy.set(plan.id, (outputResource.usedBy.get(plan.id) || 0) + plan.rate);
+		}
+
+		const outputRatio = recipe.outputs.find((output) => output.id === plan.id)!.amount / recipe.time;
+
+		for (const input of recipe.inputs) {
+			let neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
+			outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
+
+			let inputResource = newResources.get(input.id);
+			if (!inputResource) {
+				inputResource = {
+					recipe: null,
+					external: false,
+					implicit: true,
+					usedBy: new Map(),
+					uses: new Map()
+				};
+				newResources.set(input.id, inputResource);
+			}
+
+			inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
+
+			if (!outputResource.external && plan.id !== input.id) {
+				planQueue.push({
+					id: input.id,
+					rate: neededRate,
+					disabled: false,
+					implicit: true
+				});
+			}
+		}
+	}
+
+	return newResources;
+};
+
 const App: FC = () => {
-	const [plans, setPlans] = useState<Map<string, Plan>>(new Map());
-	const [settings, setSettings] = useState<Map<string, ResourceSetting>>(new Map());
-	const [resources, setResources] = useState<Map<string, Resource>>(new Map());
+	const [plans, setPlans] = useState<Map<string, Plan>>(initPlans);
+	const [settings, setSettings] = useState<Map<string, ResourceSetting>>(initSettings);
+	const [resources, setResources] = useState<Map<string, Resource>>(() => calcResources(initPlans, initSettings));
 	const [newId, setNewId] = useState('electromagnetic_matrix');
 	const [newRate, setNewRate] = useState(1);
 	const [displayFactor, setDisplayFactor] = useState(60);
@@ -112,83 +217,11 @@ const App: FC = () => {
 	]);
 
 	useEffect(() => {
-		const newResources = new Map<string, Resource>();
-
-		const planQueue: PlanQueueItem[] = [...plans]
-			.filter(([, plan]) => !plan.disabled)
-			.map(([planId, plan]) => ({ ...plan, id: planId, implicit: false }));
-		let i = 0;
-		while (planQueue.length > 0) {
-			i++; // Safety to stop endless loops
-			const plan = planQueue.shift();
-			if (!plan || i > 1000) {
-				break;
-			}
-
-			const recipes = recipesByComponent.get(plan.id)?.asOutput;
-			if (!recipes || recipes.length === 0) {
-				continue;
-			}
-
-			let outputResource = newResources.get(plan.id);
-			if (!outputResource) {
-				outputResource = {
-					recipe: null,
-					external: false,
-					implicit: true,
-					usedBy: new Map(),
-					uses: new Map()
-				};
-				newResources.set(plan.id, outputResource);
-			}
-
-			const setting = settings.get(plan.id);
-			const recipe = recipes.find((r) => r.name === setting?.recipe) || recipes[0];
-			if (!outputResource.recipe) {
-				outputResource.recipe = recipe;
-			}
-
-			if (setting?.external) {
-				outputResource.external = true;
-				continue;
-			}
-
-			if (!plan.implicit) {
-				outputResource.implicit = false;
-				outputResource.usedBy.set(plan.id, (outputResource.usedBy.get(plan.id) || 0) + plan.rate);
-			}
-
-			const outputRatio = recipe.outputs.find((output) => output.id === plan.id)!.amount / recipe.time;
-
-			for (const input of recipe.inputs) {
-				let neededRate = (plan.rate / outputRatio) * (input.amount / recipe.time);
-				outputResource.uses.set(input.id, (outputResource.uses.get(input.id) || 0) + neededRate);
-
-				let inputResource = newResources.get(input.id);
-				if (!inputResource) {
-					inputResource = {
-						recipe: null,
-						external: false,
-						implicit: true,
-						usedBy: new Map(),
-						uses: new Map()
-					};
-					newResources.set(input.id, inputResource);
-				}
-
-				inputResource.usedBy.set(plan.id, (inputResource.usedBy.get(plan.id) || 0) + neededRate);
-
-				if (!outputResource.external && plan.id !== input.id) {
-					planQueue.push({
-						id: input.id,
-						rate: neededRate,
-						disabled: false,
-						implicit: true
-					});
-				}
-			}
+		const newResources = calcResources(plans, settings);
+		if (window.localStorage) {
+			window.localStorage.setItem('plans', JSON.stringify([...plans.entries()]));
+			window.localStorage.setItem('settings', JSON.stringify([...settings.entries()]));
 		}
-
 		setResources(newResources);
 	}, [plans, settings]);
 
