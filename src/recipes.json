@@ -397,7 +397,7 @@
 			{ "id": "processor", "amount": 2 },
 			{ "id": "plane_filter", "amount": 2 }
 		],
-		"outputs": [{ "id": "quantum_processor", "amount": 2 }],
+		"outputs": [{ "id": "quantum_processor", "amount": 1 }],
 		"time": 6,
 		"machine": "assembler"
 	},
