@@ -283,7 +283,7 @@
 	{
 		"name": "plane_filter",
 		"inputs": [
-			{ "id": "casimir_crystal", "amount": 2 },
+			{ "id": "casimir_crystal", "amount": 1 },
 			{ "id": "titanium_glass", "amount": 2 }
 		],
 		"outputs": [{ "id": "plane_filter", "amount": 1 }],
